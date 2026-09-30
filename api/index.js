@@ -1,7 +1,7 @@
 // Single serverless entry point. vercel.json rewrites /api/* here.
 import { q, one, many, tx, getPool } from './_lib/db.js';
 import { HttpError, readBody, send, need } from './_lib/http.js';
-import { requireUser, getUser, signToken, hashPassword, checkPassword, isStaff, STAFF } from './_lib/auth.js';
+import { requireUser, getUser, signToken, hashPassword, checkPassword, isStaff, isDemo, blockDemo, STAFF } from './_lib/auth.js';
 import { createTicket, updateTicket, statusPatch, logActivity, findOrCreateCustomer, tnum, OPEN } from './_lib/tickets.js';
 import { withSla, policyFor, dueDates } from './_lib/sla.js';
 import { rankArticles } from './_lib/kb.js';
@@ -68,6 +68,7 @@ on('POST', '/auth/login', async ({ body }) => {
   const u = await one('select * from users where lower(email) = lower($1) and active', [body.email]);
   if (!u || !(await checkPassword(body.password, u.password_hash))) throw new HttpError(401, 'Email or password is incorrect.');
   delete u.password_hash;
+  u.demo = isDemo(u);
   return { token: signToken(u), user: u };
 });
 
@@ -438,7 +439,7 @@ on('POST', '/kb', async ({ req, body }) => {
 });
 
 on('PATCH', '/kb/:id', async ({ req, params, body }) => {
-  await requireUser(req, STAFF);
+  blockDemo(await requireUser(req, STAFF));
   return {
     article: await one(
       `update kb_articles set title = coalesce($2,title), body = coalesce($3,body), category_id = $4, tags = coalesce($5,tags),
@@ -449,7 +450,7 @@ on('PATCH', '/kb/:id', async ({ req, params, body }) => {
 });
 
 on('DELETE', '/kb/:id', async ({ req, params }) => {
-  await requireUser(req, ['admin']);
+  blockDemo(await requireUser(req, ['admin']));
   await q('delete from kb_articles where id = $1', [params.id]);
 });
 
@@ -533,7 +534,7 @@ on('GET', '/admin/:res', async ({ req, params }) => {
 });
 
 on('POST', '/admin/:res', async ({ req, params, body }) => {
-  await requireUser(req, ['admin']);
+  blockDemo(await requireUser(req, ['admin']));
   const data = clean(resource(params.res), body);
   if (params.res === 'users') {
     need(body, 'name', 'email');
@@ -550,7 +551,7 @@ on('POST', '/admin/:res', async ({ req, params, body }) => {
 });
 
 on('PATCH', '/admin/:res/:id', async ({ req, params, body }) => {
-  await requireUser(req, ['admin']);
+  blockDemo(await requireUser(req, ['admin']));
   const data = clean(resource(params.res), body);
   if (params.res === 'users' && body.password) data.password_hash = await hashPassword(body.password);
   const keys = Object.keys(data);
@@ -565,6 +566,7 @@ on('PATCH', '/admin/:res/:id', async ({ req, params, body }) => {
 
 on('DELETE', '/admin/:res/:id', async ({ req, params }) => {
   const u = await requireUser(req, ['admin']);
+  blockDemo(u);
   resource(params.res);
   if (params.res === 'users' && Number(params.id) === u.id) throw new HttpError(400, 'You cannot delete your own account.');
   if (params.res === 'users') await q('update users set active = false where id = $1', [params.id]);

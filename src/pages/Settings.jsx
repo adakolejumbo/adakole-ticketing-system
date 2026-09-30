@@ -81,7 +81,7 @@ export default function Settings() {
   const admin = user.role === 'admin';
   return (
     <div className="page page-wide">
-      <div className="page-head"><div><h1>Settings</h1><p className="muted">{admin ? 'Shape the desk around how your team works.' : 'You can view settings. Ask an administrator to change them.'}</p></div></div>
+      <div className="page-head"><div><h1>Settings</h1><p className="muted">{user.demo ? 'Demo account: settings are view-only. Tickets can still be created and worked.' : admin ? 'Shape the desk around how your team works.' : 'You can view settings. Ask an administrator to change them.'}</p></div></div>
       <div className="settings">
         <nav className="settings-nav">
           {Object.entries(tabs).map(([k, t]) => <NavLink key={k} to={`/settings/${k}`} className={() => (k === tab ? 'active' : '')}>{t.title}</NavLink>)}

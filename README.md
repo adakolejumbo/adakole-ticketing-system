@@ -39,12 +39,12 @@ Demo sign-ins: `admin@ats.local` / `Admin123!`, agents such as `priya@ats.local`
 
 1. Create a Postgres database (Neon, Supabase or Vercel Postgres) and copy the connection string.
 2. Push this folder to GitHub and import the repo in Vercel. It detects Vite; `vercel.json` handles the API and page routing.
-3. Add environment variables in Vercel: `DATABASE_URL`, `JWT_SECRET`, `SETUP_KEY`, `INBOUND_KEY`, and `APP_URL` (your site URL). Optional: `ANTHROPIC_API_KEY`, `RESEND_API_KEY` + `MAIL_FROM`, and `VITE_SHOW_DEMO=true` to show demo logins on the sign-in page.
+3. Add environment variables in Vercel: `DATABASE_URL`, `JWT_SECRET`, `SETUP_KEY`, `INBOUND_KEY`, and `APP_URL` (your site URL). Optional: `ANTHROPIC_API_KEY`, `RESEND_API_KEY` + `MAIL_FROM`, and `VITE_SHOW_DEMO=false` to hide the demo logins shown on the sign-in page. Demo accounts can work tickets but cannot change settings, people, passwords or knowledge base articles; set `DEMO_READONLY=false` to lift that.
 4. Deploy, then create the tables once:
    ```powershell
    Invoke-RestMethod -Method Post -Uri "https://YOUR-APP.vercel.app/api/setup" -ContentType "application/json" -Body '{"key":"YOUR_SETUP_KEY"}'
    ```
-5. Sign in as the admin and change the password under Settings → People.
+5. To use the desk for real, set `DEMO_READONLY=false` and `VITE_SHOW_DEMO=false`, redeploy, then sign in as the admin and change the password under Settings → People.
 
 ## Connecting channels
 

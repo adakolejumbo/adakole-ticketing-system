@@ -3,6 +3,13 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { post } from '../api.js';
 import { useAuth } from '../App.jsx';
 
+const SHOW_DEMO = import.meta.env.VITE_SHOW_DEMO !== 'false';
+const DEMO_ACCOUNTS = [
+  { role: 'Admin', blurb: 'Full access: queue, reports, routing, SLAs, settings', email: 'admin@ats.local', password: 'Admin123!' },
+  { role: 'Agent', blurb: 'Work tickets, reply, add internal notes', email: 'priya@ats.local', password: 'Password123!' },
+  { role: 'Client', blurb: 'Customer portal: submit and track own requests', email: 'anna@fvdental.ca', password: 'Password123!' },
+];
+
 export default function Login() {
   const { signIn } = useAuth();
   const nav = useNavigate();
@@ -13,12 +20,11 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const authenticate = async (path, body) => {
     setBusy(true);
     setError('');
     try {
-      const d = await post(mode === 'signin' ? '/auth/login' : '/auth/register', form);
+      const d = await post(path, body);
       signIn(d.token, d.user);
       const staff = ['admin', 'agent'].includes(d.user.role);
       nav(loc.state?.from || (staff ? '/' : '/portal/requests'), { replace: true });
@@ -27,6 +33,17 @@ export default function Login() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const submit = (e) => {
+    e.preventDefault();
+    authenticate(mode === 'signin' ? '/auth/login' : '/auth/register', form);
+  };
+
+  const demoSignIn = ({ email, password }) => {
+    setMode('signin');
+    setForm({ name: '', email, password });
+    authenticate('/auth/login', { email, password });
   };
 
   return (
@@ -57,11 +74,16 @@ export default function Login() {
           <button type="button" className="link" onClick={() => { setMode(mode === 'signin' ? 'register' : 'signin'); setError(''); }}>
             {mode === 'signin' ? 'New client? Create an account' : 'Already have an account? Sign in'}
           </button>
-          {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO === 'true') && <div className="demo-creds">
-            <strong>Demo accounts</strong>
-            <span>Admin: admin@ats.local / Admin123!</span>
-            <span>Agent: priya@ats.local / Password123!</span>
-            <span>Client: anna@fvdental.ca / Password123!</span>
+          {SHOW_DEMO && <div className="demo-creds">
+            <strong>Try the demo</strong>
+            <span>Sign in instantly as any role:</span>
+            {DEMO_ACCOUNTS.map((a) => (
+              <button key={a.role} type="button" className="demo-account" disabled={busy} onClick={() => demoSignIn(a)}>
+                <span className="demo-role">{a.role}</span>
+                <span className="demo-blurb">{a.blurb}</span>
+                <span className="demo-login">{a.email} / {a.password}</span>
+              </button>
+            ))}
           </div>}
           <Link to="/portal" className="link">Go to the help center without signing in</Link>
         </form>

@@ -24,10 +24,12 @@ export async function getUser(req) {
   } catch {
     return null;
   }
-  return one(
+  const user = await one(
     `select id, name, email, role, team_id, org_id, skills from users where id = $1 and active`,
     [payload.sub]
   );
+  if (user) user.demo = isDemo(user);
+  return user;
 }
 
 export async function requireUser(req, roles) {
@@ -38,4 +40,15 @@ export async function requireUser(req, roles) {
 }
 
 export const STAFF = ['admin', 'agent'];
+
+// Seeded accounts whose passwords are public. They can work tickets but cannot change
+// settings, people, passwords or knowledge base articles. Set DEMO_READONLY=false to lift this.
+const DEMO_EMAILS = new Set([
+  'admin@ats.local', 'priya@ats.local', 'marcus@ats.local', 'elena@ats.local', 'tom@ats.local', 'sara@ats.local', 'dev@ats.local',
+  'anna@fvdental.ca', 'jake@summitlogistics.ca', 'linda@harbourlegal.ca', 'omar@summitlogistics.ca',
+]);
+export const isDemo = (u) => process.env.DEMO_READONLY !== 'false' && !!u && DEMO_EMAILS.has(String(u.email).toLowerCase());
+export function blockDemo(u) {
+  if (isDemo(u)) throw new HttpError(403, 'Demo accounts are read-only here. You can still create and work tickets.');
+}
 export const isStaff = (u) => u && STAFF.includes(u.role);

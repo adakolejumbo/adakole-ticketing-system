@@ -301,6 +301,12 @@ table.tickets { width: 100%; border-collapse: collapse; }
 .login-form > .link { margin-top: 12px; text-align: left; }
 .demo-creds { margin-top: 22px; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 4px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; color: var(--muted); }
 .demo-creds strong { color: var(--ink); }
+.demo-creds > span { margin-bottom: 6px; }
+.demo-account { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; margin-top: 6px; padding: 8px 10px; text-align: left; font: inherit; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+.demo-account:hover:not(:disabled) { border-color: var(--pine); background: var(--pine-tint); }
+.demo-account:disabled { opacity: 0.6; cursor: wait; }
+.demo-role { font-weight: 700; color: var(--pine); }
+.demo-login { font-family: ui-monospace, Consolas, monospace; font-size: 0.8rem; word-break: break-all; }
 
 /* Portal */
 .portal { min-height: 100%; display: flex; flex-direction: column; }
